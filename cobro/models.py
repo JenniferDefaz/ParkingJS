@@ -166,7 +166,96 @@ class Espacio(models.Model):
         verbose_name_plural = "Espacios"
         ordering = ['zona', 'piso', 'numero']
 
+        
+
     ###########################
+# ==================== MODELO TARIFA ====================
+class Tarifa(models.Model):
+    TIPO_TARIFA_CHOICES = [
+        ('HORA', 'Por Hora'),
+        ('MEDIA_HORA', 'Media Hora'),
+        ('DIA', 'Por Día'),
+        ('SEMANA', 'Por Semana'),
+        ('MES', 'Mensual'),
+        ('ANO', 'Anual'),
+    ]
+    
+    CATEGORIA_CHOICES = [
+        ('AUTO', 'Automóvil'),
+        ('MOTO', 'Motocicleta'),
+        ('CAMIONETA', 'Camioneta'),
+        ('CAMION', 'Camión'),
+        ('BUS', 'Bus'),
+        ('DISCAPACITADO', 'Persona con Discapacidad'),
+        ('VIP', 'VIP'),
+    ]
+    
+    ESTADO_CHOICES = [
+        ('ACTIVA', 'Activa'),
+        ('INACTIVA', 'Inactiva'),
+        ('VIGENTE', 'Vigente'),
+        ('CADUCADA', 'Caducada'),
+    ]
+    
+    # Campos principales
+    id = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=100, help_text="Ej: Tarifa Estándar Auto, Tarifa Nocturna, etc.")
+    descripcion = models.TextField(blank=True, null=True)
+    
+    # Tipo y categoría
+    tipo_tarifa = models.CharField(max_length=20, choices=TIPO_TARIFA_CHOICES, default='HORA')
+    categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES, default='AUTO')
+    
+    # Valores económicos
+    valor = models.DecimalField(max_digits=10, decimal_places=2, help_text="Valor de la tarifa")
+    valor_hora_extra = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, blank=True, null=True, help_text="Valor por hora adicional")
+    
+    # Rango horario (para tarifas por rango de tiempo)
+    hora_inicio = models.TimeField(blank=True, null=True, help_text="Hora de inicio (ej: 22:00)")
+    hora_fin = models.TimeField(blank=True, null=True, help_text="Hora de fin (ej: 06:00)")
+    
+    # Días de aplicación
+    dias_aplicacion = models.CharField(max_length=100, blank=True, null=True, help_text="Ej: LUNES,MARTES,MIERCOLES")
+    
+    # Límites
+    tiempo_minimo = models.IntegerField(default=1, help_text="Tiempo mínimo en horas")
+    tiempo_maximo = models.IntegerField(blank=True, null=True, help_text="Tiempo máximo en horas")
+    
+    # Impuestos
+    incluye_iva = models.BooleanField(default=True, help_text="¿Incluye IVA?")
+    porcentaje_iva = models.DecimalField(max_digits=5, decimal_places=2, default=15.00, help_text="Porcentaje de IVA")
+    
+    # Estado
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='ACTIVA')
+    fecha_inicio_vigencia = models.DateField(auto_now_add=True)
+    fecha_fin_vigencia = models.DateField(blank=True, null=True)
+    
+    # Relación con espacio (opcional, tarifa específica por espacio)
+    espacio = models.ForeignKey(
+        Espacio, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='tarifas',
+        help_text="Espacio específico (opcional)"
+    )
+    
+    # Observaciones
+    observacion = models.TextField(blank=True, null=True)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    actualizado_por = models.CharField(max_length=100, blank=True)
+    
+    def __str__(self):
+        return f"{self.nombre} - {self.categoria} - ${self.valor}/{self.get_tipo_tarifa_display()}"
+    
+    class Meta:
+        verbose_name = "Tarifa"
+        verbose_name_plural = "Tarifas"
+        ordering = ['categoria', 'tipo_tarifa', 'valor']
+
+
+
+#####################################################
     # ==================== MODELO COBRO ====================
 class Cobro(models.Model):
     # Métodos de pago
