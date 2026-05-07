@@ -52,3 +52,4 @@ class Cliente(models.Model):
         verbose_name = "Cliente"
         verbose_name_plural = "Clientes"
         ordering = ['apellido', 'nombre']
+
