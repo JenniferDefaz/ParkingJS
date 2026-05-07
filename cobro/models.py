@@ -165,3 +165,99 @@ class Espacio(models.Model):
         verbose_name = "Espacio"
         verbose_name_plural = "Espacios"
         ordering = ['zona', 'piso', 'numero']
+
+    ###########################
+    # ==================== MODELO COBRO ====================
+class Cobro(models.Model):
+    # Métodos de pago
+    METODO_PAGO_CHOICES = [
+        ('EFECTIVO', '💵 Efectivo'),
+        ('TARJETA_CREDITO', '💳 Tarjeta de Crédito'),
+        ('TARJETA_DEBITO', '💳 Tarjeta de Débito'),
+        ('TRANSFERENCIA', '🏦 Transferencia Bancaria'),
+        ('YAPE', '📱 Yape'),
+        ('PLIN', '📱 Plin'),
+        ('TRANSACCION', '🔄 Transacción'),
+    ]
+    
+    # Estado del cobro
+    ESTADO_COBRO_CHOICES = [
+        ('ACTIVO', '🟢 Activo (Vehículo estacionado)'),
+        ('PAGADO', '✅ Pagado'),
+        ('ANULADO', '❌ Anulado'),
+        ('PENDIENTE', '⏳ Pendiente de pago'),
+    ]
+    
+    # Tipo de tarifa
+    TARIFA_CHOICES = [
+        ('HORA', 'Por Hora'),
+        ('DIA', 'Por Día'),
+        ('MES', 'Mensual'),
+        ('SEMANA', 'Semanal'),
+    ]
+    
+    # Campos principales
+    id = models.AutoField(primary_key=True)
+    numero_cobro = models.CharField(max_length=20, unique=True, blank=True, help_text="Número de ticket/factura")
+    
+    # Relaciones
+    vehiculo = models.ForeignKey(
+        Vehiculo, 
+        on_delete=models.CASCADE, 
+        related_name='cobros'
+    )
+    espacio = models.ForeignKey(
+        Espacio, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='cobros'
+    )
+    
+    # Fechas
+    fecha_ingreso = models.DateTimeField(auto_now_add=True)
+    fecha_salida = models.DateTimeField(null=True, blank=True)
+    
+    # Cálculos de tiempo
+    horas_estacionado = models.DecimalField(max_digits=8, decimal_places=2, default=0.00)
+    minutos_estacionado = models.IntegerField(default=0)
+    
+    # Valores económicos
+    valor_hora = models.DecimalField(max_digits=6, decimal_places=2, default=1.50)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    iva = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="IVA 15% o 12% según tarifa")
+    descuento = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    # Pago
+    metodo_pago = models.CharField(
+        max_length=20, 
+        choices=METODO_PAGO_CHOICES, 
+        default='EFECTIVO'
+    )
+    estado = models.CharField(
+        max_length=20, 
+        choices=ESTADO_COBRO_CHOICES, 
+        default='ACTIVO'
+    )
+    tipo_tarifa = models.CharField(
+        max_length=10, 
+        choices=TARIFA_CHOICES, 
+        default='HORA'
+    )
+    
+    # Información adicional
+    observacion = models.TextField(blank=True, null=True)
+    factura_electronica = models.BooleanField(default=False)
+    factura_numero = models.CharField(max_length=50, blank=True, null=True)
+    
+    # Campos para registro
+    creado_por = models.CharField(max_length=100, blank=True, help_text="Usuario que registró")
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Cobro #{self.numero_cobro} - {self.vehiculo.placa} - Total: ${self.total}"
+    
+    class Meta:
+        verbose_name = "Cobro"
+        verbose_name_plural = "Cobros"
+        ordering = ['-fecha_ingreso']
