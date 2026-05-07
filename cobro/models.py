@@ -106,3 +106,62 @@ class Vehiculo(models.Model):
         verbose_name = "Vehículo"
         verbose_name_plural = "Vehículos"
         ordering = ['placa']
+
+
+###################
+# ==================== MODELO ESPACIO ====================
+class Espacio(models.Model):
+    # Estado del espacio
+    ESTADO_CHOICES = [
+        ('DISPONIBLE', '✅ Disponible'),
+        ('OCUPADO', '🔴 Ocupado'),
+        ('MANTENIMIENTO', '🔧 Mantenimiento'),
+        ('RESERVADO', '📅 Reservado'),
+    ]
+    
+    # Tipo de vehículo que puede ocupar el espacio
+    TIPO_ESPACIO_CHOICES = [
+        ('AUTO', 'Automóvil'),
+        ('MOTO', 'Motocicleta'),
+        ('CAMIONETA', 'Camioneta'),
+        ('DISCAPACITADO', 'Persona con Discapacidad'),
+        ('MUJER', 'Mujer Embarazada/Con Niños'),
+        ('CARGA', 'Vehículo de Carga'),
+    ]
+    
+    # Zona del parqueadero
+    ZONA_CHOICES = [
+        ('NORTE', 'Zona Norte'),
+        ('SUR', 'Zona Sur'),
+        ('ESTE', 'Zona Este'),
+        ('OESTE', 'Zona Oeste'),
+        ('CENTRO', 'Zona Centro'),
+        ('VIP', 'Zona VIP'),
+    ]
+    
+    id = models.AutoField(primary_key=True)
+    numero = models.IntegerField(unique=True, help_text="Número de espacio (1,2,3...)")
+    zona = models.CharField(max_length=20, choices=ZONA_CHOICES, default='NORTE')
+    tipo_espacio = models.CharField(max_length=20, choices=TIPO_ESPACIO_CHOICES, default='AUTO')
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='DISPONIBLE')
+    
+    # Tarifa por hora según tipo de espacio
+    tarifa_hora = models.DecimalField(max_digits=6, decimal_places=2, default=1.50)
+    tarifa_hora_extra = models.DecimalField(max_digits=6, decimal_places=2, default=2.00)
+    
+    # Ubicación física
+    piso = models.IntegerField(default=1, help_text="Número de piso")
+    sector = models.CharField(max_length=50, blank=True, help_text="Ej: Sector A, cerca del ascensor")
+    
+    # Campos adicionales
+    tiene_cargador_electrico = models.BooleanField(default=False)
+    tiene_seguridad = models.BooleanField(default=True)
+    observacion = models.TextField(blank=True, null=True)
+    
+    def __str__(self):
+        return f"Espacio #{self.numero} - Zona {self.zona} - {self.get_estado_display()}"
+    
+    class Meta:
+        verbose_name = "Espacio"
+        verbose_name_plural = "Espacios"
+        ordering = ['zona', 'piso', 'numero']
